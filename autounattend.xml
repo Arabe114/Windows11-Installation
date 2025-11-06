@@ -451,6 +451,40 @@ $file = "$env:TEMP\{0}" -f $uri.Segments[-1];
 Start-Process -FilePath $file -ArgumentList '/silent /install' -Wait;
 Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
 		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-06.ps1">
+$uri = [uri]::new( 'https://download.anydesk.com/AnyDesk.exe' );
+$file = "$env:TEMP\{0}" -f $uri.Segments[-1];
+[System.Net.WebClient]::new().DownloadFile( $uri, $file );
+Start-Process -FilePath $file -ArgumentList '--install "C:\Program Files (x86)\AnyDesk" --start-with-win --silent' -Wait;
+Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
+		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-07.ps1">
+$uri = [uri]::new( 'https://laptop-updates.brave.com/latest/winx64' );
+$file = "$env:TEMP\BraveBrowserSetup.exe";
+[System.Net.WebClient]::new().DownloadFile( $uri, $file );
+Start-Process -FilePath $file -ArgumentList '/silent /install' -Wait;
+Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
+		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-08.ps1">
+$uri = [uri]::new( 'https://app.prntscr.com/build/setup-lightshot.exe' );
+$file = "$env:TEMP\{0}" -f $uri.Segments[-1];
+[System.Net.WebClient]::new().DownloadFile( $uri, $file );
+Start-Process -FilePath $file -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait;
+Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
+		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-09.ps1">
+$uri = [uri]::new( 'https://mt.lv/winbox64' );
+$file = "$env:TEMP\winbox64.exe";
+[System.Net.WebClient]::new().DownloadFile( $uri, $file );
+$destination = "C:\Program Files\Winbox";
+New-Item -ItemType Directory -Path $destination -Force | Out-Null;
+Copy-Item -Path $file -Destination "$destination\winbox64.exe" -Force;
+$WshShell = New-Object -comObject WScript.Shell;
+$Shortcut = $WshShell.CreateShortcut("$env:PUBLIC\Desktop\Winbox.lnk");
+$Shortcut.TargetPath = "$destination\winbox64.exe";
+$Shortcut.Save();
+Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
 $scripts = @(
 	{
@@ -537,6 +571,18 @@ $scripts = @(
 	};
 	{
 		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-05.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-06.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-07.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-08.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-09.ps1' -Raw | Invoke-Expression;
 	};
 );
 
