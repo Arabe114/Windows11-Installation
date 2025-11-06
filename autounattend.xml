@@ -641,6 +641,7 @@ $layoutXml = @"
             &lt;taskbar:TaskbarPinList&gt;
                 &lt;taskbar:DesktopApp DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\File Explorer.lnk" /&gt;
                 &lt;taskbar:DesktopApp DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Brave.lnk" /&gt;
+                &lt;taskbar:DesktopApp DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Microsoft Edge.lnk" /&gt;
             &lt;/taskbar:TaskbarPinList&gt;
         &lt;/defaultlayout:TaskbarLayout&gt;
     &lt;/CustomTaskbarLayoutCollection&gt;
@@ -661,6 +662,20 @@ if ($bravePath -ne '') {
     $braveShortcut = $WshShell.CreateShortcut("$startMenuPath\Brave.lnk");
     $braveShortcut.TargetPath = $bravePath;
     $braveShortcut.Save();
+}
+
+# Create Microsoft Edge shortcut
+$edgePaths = @(
+    "$env:ProgramFiles (x86)\Microsoft\Edge\Application\msedge.exe",
+    "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe"
+);
+foreach ($edgePath in $edgePaths) {
+    if (Test-Path $edgePath) {
+        $edgeShortcut = $WshShell.CreateShortcut("$startMenuPath\Microsoft Edge.lnk");
+        $edgeShortcut.TargetPath = $edgePath;
+        $edgeShortcut.Save();
+        break;
+    }
 }
 
 # Save layout XML
