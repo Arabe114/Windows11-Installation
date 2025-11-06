@@ -70,7 +70,7 @@ $isoDesc.Margin = New-Object System.Windows.Forms.Padding(0,0,0,15)
 $isoPanel.Controls.Add($isoDesc)
 
 $isoLink = New-Object System.Windows.Forms.LinkLabel
-$isoLink.Text = "👉 Download Windows 11 ISO from Microsoft"
+$isoLink.Text = ">> Download Windows 11 ISO from Microsoft"
 $isoLink.AutoSize = $true
 $isoLink.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $isoLink.LinkColor = [System.Drawing.Color]::FromArgb(0, 102, 204)
@@ -371,7 +371,7 @@ $btn.DialogResult = [System.Windows.Forms.DialogResult]::OK
 
 $btnPanel.Controls.Add($btn)
 
-# vendose panelin e butonit në rreshtin 3 dhe zgjeroje te 2 kolonat
+# Place the button panel in row 3 and span across 2 columns
 $grid.Controls.Add($btnPanel, 0, 3)
 $grid.SetColumnSpan($btnPanel, 2)
 
@@ -395,7 +395,7 @@ if (-not $cpuNames -or $cpuNames.Count -eq 0) { $cpuNames = @("(unknown CPU)") }
 
 $results = $cpuNames | ForEach-Object { Infer-FeaturesFromCpuName -Name $_ }
 
-# Shfaq dialogun me ngjyra; nëse ka UNKNOWN i ofro user-it Coreinfo
+# Show the dialog with colors; if there are UNKNOWN values, offer Coreinfo to the user
 $openCoreinfo = Show-CPUHeuristicDialog -Results $results
 if ($openCoreinfo) {
     try {
