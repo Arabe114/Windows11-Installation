@@ -451,6 +451,47 @@ $file = "$env:TEMP\{0}" -f $uri.Segments[-1];
 Start-Process -FilePath $file -ArgumentList '/silent /install' -Wait;
 Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
 		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-06.ps1">
+$uri = [uri]::new( 'https://download.anydesk.com/AnyDesk.exe' );
+$file = "$env:TEMP\{0}" -f $uri.Segments[-1];
+[System.Net.WebClient]::new().DownloadFile( $uri, $file );
+Start-Process -FilePath $file -ArgumentList '--install "C:\Program Files (x86)\AnyDesk" --start-with-win --silent' -Wait;
+Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
+		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-07.ps1">
+$uri = [uri]::new( 'https://laptop-updates.brave.com/latest/winx64' );
+$file = "$env:TEMP\BraveBrowserSetup.exe";
+[System.Net.WebClient]::new().DownloadFile( $uri, $file );
+Start-Process -FilePath $file -ArgumentList '/silent /install' -Wait;
+Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
+		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-08.ps1">
+$uri = [uri]::new( 'https://app.prntscr.com/build/setup-lightshot.exe' );
+$file = "$env:TEMP\{0}" -f $uri.Segments[-1];
+[System.Net.WebClient]::new().DownloadFile( $uri, $file );
+Start-Process -FilePath $file -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait;
+Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
+		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-09.ps1">
+$uri = [uri]::new( 'https://mt.lv/winbox64' );
+$file = "$env:TEMP\winbox64.exe";
+[System.Net.WebClient]::new().DownloadFile( $uri, $file );
+$destination = "C:\Program Files\Winbox";
+New-Item -ItemType Directory -Path $destination -Force | Out-Null;
+Copy-Item -Path $file -Destination "$destination\winbox64.exe" -Force;
+$WshShell = New-Object -comObject WScript.Shell;
+$Shortcut = $WshShell.CreateShortcut("$env:PUBLIC\Desktop\Winbox.lnk");
+$Shortcut.TargetPath = "$destination\winbox64.exe";
+$Shortcut.Save();
+Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
+		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-10.ps1">
+$uri = [uri]::new( 'https://install.speedtest.net/app/windows/latest/speedtest-windows-installer.exe' );
+$file = "$env:TEMP\speedtest-installer.exe";
+[System.Net.WebClient]::new().DownloadFile( $uri, $file );
+Start-Process -FilePath $file -ArgumentList '/S' -Wait;
+Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
 $scripts = @(
 	{
@@ -538,6 +579,21 @@ $scripts = @(
 	{
 		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-05.ps1' -Raw | Invoke-Expression;
 	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-06.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-07.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-08.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-09.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-10.ps1' -Raw | Invoke-Expression;
+	};
 );
 
 &amp; {
@@ -562,6 +618,88 @@ $scripts = @(
   }
 } *&gt;&amp;1 | Out-String -Stream &gt;&gt; "C:\Windows\Setup\Scripts\Specialize.log";
 		</File>
+		<File path="C:\Windows\Setup\Scripts\SetTaskbarPins.ps1">
+# Wait for Brave installation to complete
+Start-Sleep -Seconds 3;
+
+# Find Brave Browser installation path
+$bravePath = '';
+$bravePaths = @(
+    "$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe",
+    "${env:ProgramFiles(x86)}\BraveSoftware\Brave-Browser\Application\brave.exe",
+    "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\Application\brave.exe"
+);
+
+foreach ($path in $bravePaths) {
+    if (Test-Path $path) {
+        $bravePath = $path;
+        break;
+    }
+}
+
+# Create taskbar layout XML for Windows 11
+$layoutXml = @"
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;LayoutModificationTemplate
+    xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification"
+    xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout"
+    xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout"
+    xmlns:taskbar="http://schemas.microsoft.com/Start/2014/TaskbarLayout"
+    Version="1"&gt;
+    &lt;CustomTaskbarLayoutCollection PinListPlacement="Replace"&gt;
+        &lt;defaultlayout:TaskbarLayout&gt;
+            &lt;taskbar:TaskbarPinList&gt;
+                &lt;taskbar:DesktopApp DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\File Explorer.lnk" /&gt;
+                &lt;taskbar:DesktopApp DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Brave.lnk" /&gt;
+                &lt;taskbar:DesktopApp DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Microsoft Edge.lnk" /&gt;
+            &lt;/taskbar:TaskbarPinList&gt;
+        &lt;/defaultlayout:TaskbarLayout&gt;
+    &lt;/CustomTaskbarLayoutCollection&gt;
+&lt;/LayoutModificationTemplate&gt;
+"@;
+
+# Create shortcuts in Start Menu for pinning
+$startMenuPath = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs";
+
+# Create File Explorer shortcut
+$WshShell = New-Object -ComObject WScript.Shell;
+$explorerShortcut = $WshShell.CreateShortcut("$startMenuPath\File Explorer.lnk");
+$explorerShortcut.TargetPath = "$env:windir\explorer.exe";
+$explorerShortcut.Save();
+
+# Create Brave Browser shortcut if found
+if ($bravePath -ne '') {
+    $braveShortcut = $WshShell.CreateShortcut("$startMenuPath\Brave.lnk");
+    $braveShortcut.TargetPath = $bravePath;
+    $braveShortcut.Save();
+}
+
+# Create Microsoft Edge shortcut
+$edgePaths = @(
+    "$env:ProgramFiles (x86)\Microsoft\Edge\Application\msedge.exe",
+    "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe"
+);
+foreach ($edgePath in $edgePaths) {
+    if (Test-Path $edgePath) {
+        $edgeShortcut = $WshShell.CreateShortcut("$startMenuPath\Microsoft Edge.lnk");
+        $edgeShortcut.TargetPath = $edgePath;
+        $edgeShortcut.Save();
+        break;
+    }
+}
+
+# Save layout XML
+$layoutPath = "$env:LOCALAPPDATA\Microsoft\Windows\Shell\LayoutModification.xml";
+New-Item -ItemType Directory -Path (Split-Path $layoutPath) -Force -ErrorAction SilentlyContinue | Out-Null;
+$layoutXml | Out-File -FilePath $layoutPath -Encoding UTF8 -Force;
+
+# Apply via registry
+reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarSizeMove /t REG_DWORD /d 0 /f;
+reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarSmallIcons /t REG_DWORD /d 0 /f;
+
+# Remove default pins from taskbar
+Remove-Item -Path "$env:APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\*" -Force -ErrorAction SilentlyContinue;
+		</File>
 		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
 $scripts = @(
 	{
@@ -581,6 +719,9 @@ $scripts = @(
 	};
 	{
 		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\SetWallpaper.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\SetTaskbarPins.ps1' -Raw | Invoke-Expression;
 	};
 	{
 		Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Where-Object -FilterScript {
