@@ -608,6 +608,73 @@ $scripts = @(
   }
 } *&gt;&amp;1 | Out-String -Stream &gt;&gt; "C:\Windows\Setup\Scripts\Specialize.log";
 		</File>
+		<File path="C:\Windows\Setup\Scripts\SetTaskbarPins.ps1">
+# Wait for Brave installation to complete
+Start-Sleep -Seconds 3;
+
+# Find Brave Browser installation path
+$bravePath = '';
+$bravePaths = @(
+    "$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe",
+    "${env:ProgramFiles(x86)}\BraveSoftware\Brave-Browser\Application\brave.exe",
+    "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\Application\brave.exe"
+);
+
+foreach ($path in $bravePaths) {
+    if (Test-Path $path) {
+        $bravePath = $path;
+        break;
+    }
+}
+
+# Create taskbar layout XML for Windows 11
+$layoutXml = @"
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;LayoutModificationTemplate
+    xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification"
+    xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout"
+    xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout"
+    xmlns:taskbar="http://schemas.microsoft.com/Start/2014/TaskbarLayout"
+    Version="1"&gt;
+    &lt;CustomTaskbarLayoutCollection PinListPlacement="Replace"&gt;
+        &lt;defaultlayout:TaskbarLayout&gt;
+            &lt;taskbar:TaskbarPinList&gt;
+                &lt;taskbar:DesktopApp DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\File Explorer.lnk" /&gt;
+                &lt;taskbar:DesktopApp DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Brave.lnk" /&gt;
+            &lt;/taskbar:TaskbarPinList&gt;
+        &lt;/defaultlayout:TaskbarLayout&gt;
+    &lt;/CustomTaskbarLayoutCollection&gt;
+&lt;/LayoutModificationTemplate&gt;
+"@;
+
+# Create shortcuts in Start Menu for pinning
+$startMenuPath = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs";
+
+# Create File Explorer shortcut
+$WshShell = New-Object -ComObject WScript.Shell;
+$explorerShortcut = $WshShell.CreateShortcut("$startMenuPath\File Explorer.lnk");
+$explorerShortcut.TargetPath = "$env:windir\explorer.exe";
+$explorerShortcut.Save();
+
+# Create Brave Browser shortcut if found
+if ($bravePath -ne '') {
+    $braveShortcut = $WshShell.CreateShortcut("$startMenuPath\Brave.lnk");
+    $braveShortcut.TargetPath = $bravePath;
+    $braveShortcut.Save();
+}
+
+# Save layout XML
+$layoutPath = "$env:LOCALAPPDATA\Microsoft\Windows\Shell\LayoutModification.xml";
+New-Item -ItemType Directory -Path (Split-Path $layoutPath) -Force -ErrorAction SilentlyContinue | Out-Null;
+$layoutXml | Out-File -FilePath $layoutPath -Encoding UTF8 -Force;
+
+# Apply via registry
+reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarSizeMove /t REG_DWORD /d 0 /f;
+reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarSmallIcons /t REG_DWORD /d 0 /f;
+
+# Remove default pins from taskbar
+Remove-Item -Path "$env:APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\*" -Force -ErrorAction SilentlyContinue;
+		</File>
 		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
 $scripts = @(
 	{
@@ -627,6 +694,9 @@ $scripts = @(
 	};
 	{
 		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\SetWallpaper.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\SetTaskbarPins.ps1' -Raw | Invoke-Expression;
 	};
 	{
 		Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Where-Object -FilterScript {
