@@ -485,6 +485,13 @@ $Shortcut.TargetPath = "$destination\winbox64.exe";
 $Shortcut.Save();
 Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
 		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-10.ps1">
+$uri = [uri]::new( 'https://install.speedtest.net/app/windows/latest/speedtest-windows-installer.exe' );
+$file = "$env:TEMP\speedtest-installer.exe";
+[System.Net.WebClient]::new().DownloadFile( $uri, $file );
+Start-Process -FilePath $file -ArgumentList '/S' -Wait;
+Remove-Item -LiteralPath $file -ErrorAction 'SilentlyContinue';
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
 $scripts = @(
 	{
@@ -583,6 +590,9 @@ $scripts = @(
 	};
 	{
 		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-09.ps1' -Raw | Invoke-Expression;
+	};
+	{
+		Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\unattend-10.ps1' -Raw | Invoke-Expression;
 	};
 );
 
