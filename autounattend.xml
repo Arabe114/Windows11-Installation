@@ -421,7 +421,45 @@ function Set-WallpaperImage {
 		"Cannot use '$LiteralPath' as a desktop wallpaper because that file does not exist.";
 	}
 }
-Set-WallpaperColor -HtmlColor '#454545';
+
+function Set-WallpaperFromUrl {
+	param(
+		[string]
+		$Url
+	);
+
+	try {
+		$wallpaperDir = 'C:\Windows\Web\Wallpaper\Custom';
+		if( -not (Test-Path $wallpaperDir) ) {
+			New-Item -ItemType Directory -Path $wallpaperDir -Force | Out-Null;
+		}
+
+		$extension = '.jpg';
+		if( $Url -match '\.(png|jpg|jpeg|bmp)(\?.*)?$' ) {
+			$extension = ".$($Matches[1])";
+		}
+
+		$wallpaperPath = Join-Path $wallpaperDir "wallpaper$extension";
+
+		[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls11;
+		$webClient = New-Object System.Net.WebClient;
+		$webClient.Headers.Add('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+		$webClient.DownloadFile( $Url, $wallpaperPath );
+
+		if( Test-Path $wallpaperPath ) {
+			Set-WallpaperImage -LiteralPath $wallpaperPath;
+			"Successfully downloaded and set wallpaper from: $Url";
+		} else {
+			"Failed to download wallpaper from: $Url";
+		}
+	} catch {
+		"Error downloading wallpaper: $_";
+		Set-WallpaperColor -HtmlColor '#454545';
+	}
+}
+
+$wallpaperUrl = 'https://imgur.com/a/EXGYRCV';
+Set-WallpaperFromUrl -Url $wallpaperUrl;
 		</File>
 		<File path="C:\Windows\Setup\Scripts\unattend-01.ps1">
 $out = &amp; "$env:windir\System32\powercfg.exe" /DuplicateScheme 'e9a42b02-d5df-448d-aa00-03f14749eb61';
