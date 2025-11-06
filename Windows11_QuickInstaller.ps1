@@ -85,7 +85,7 @@ $isoLink.Add_LinkClicked({
 $isoPanel.Controls.Add($isoLink)
 
 $isoContinue = New-Object System.Windows.Forms.Button
-$isoContinue.Text = "I have the ISO file → Continue"
+$isoContinue.Text = "I have the ISO file - Continue"
 $isoContinue.Width = 220
 $isoContinue.Height = 40
 $isoContinue.DialogResult = [System.Windows.Forms.DialogResult]::OK
